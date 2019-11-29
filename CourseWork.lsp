@@ -2,6 +2,7 @@
 ; (main `((H b S) (H a B) (H a A) (A b B) (A a A)))
 ; (main `((H a B) (H "0" A) (A c H) (A "1" B) (B b B) (B "0" S) (C "3" B) (C a H)))
 ; (determine `((H "1" S) (H "0" B) (H "0" A) (A "1" B) (A "0" A)))
+; (construct-process `((H "1" S) (H "0" B) (H "0" A) (A "1" B) (A "0" A)) `(H) `(H) ())
 
 
 (defun main (g)
@@ -109,11 +110,33 @@
 		(T (append (construct-process l (car nodes) nodes-const) (construct-determine l (cdr nodes) nodes-const)))))
 		
 
-(defun construct-process (l node nodes-const)
+; (defun construct-process (l node nodes-const)
+; 	(cond 
+; 		((null l) NIL)
+; 		((string-include (caar l) node) (cons (list (caar l) (nth 1 (car l)) (check-new-node (nth 2 (car l)) nodes-const)) (construct-process (cdr l) node nodes-const)))
+; 		(T (construct-process (cdr l) node nodes-const))))
+
+
+(defun construct-process (l q processed new)
+	;(print q)
+	; (print (update-q (get_new_nodes l q processed (get-last q) ()) (strike-last q) processed))
+	; (print (get_new_nodes l q processed (get-last q) ()))
+	; (print (get-auto (get-last q) (get_new_nodes l q processed (get-last q) ())))
+	; (print (cons (get-auto (get-last q) (get_new_nodes l q processed (get-last q) ())) ()))
 	(cond 
-		((null l) NIL)
-		((string-include (caar l) node) (cons (list (caar l) (nth 1 (car l)) (check-new-node (nth 2 (car l)) nodes-const)) (construct-process (cdr l) node nodes-const)))
-		(T (construct-process (cdr l) node nodes-const))))
+		((null q) new)
+		(T (let* (
+			(node (get-last q))
+			(d (get_new_nodes l q processed node ())))
+			(construct-process l (update-q d (strike-last q) processed) (cons node processed) (append (get-auto d node) new))
+		))))
+
+
+(defun get-auto (d node)
+	(cond 
+		((null d) NIL)
+		(T (cons (list node (caar d) (concate-nodes (cadar d))) (get-auto (cdr d) node)))
+		))
 
 
 ; Ищет новую вершину, соответствующую старой ( "А" -> "AB" )
@@ -123,23 +146,7 @@
 		((null nodes) ("ERR"))
 		((string-include (string node) (string (car nodes))) (car nodes))
 		(T (check-new-node node (cdr nodes)))))
-				
-#|
-; Строит элементы ДКА по одному состоянию		
-(defun construct-routes (l node nodes-const routes)
-	(cond
-		((null l) routes)
-		((string-include (string (caar l)) node) (construct-routes (cdr l) node nodes-const (cons (list node (cadar l) (search-node (caddar l) nodes-const)))))
-		(T (construct-routes (cdr l) node nodes-const routes))))
 
-
-; Ищет подходящую вершину в новых по старой
-(defun search-node (node nodes)
-	(cond 
-		((null nodes) NIL)
-		((string-include (string node) (car nodes)) (car nodes))
-		(T (search-node node (car nodes)))))
-|#
 
 ; Строит список вершин ДКА по заданому автомату
 (defun get-determine-nodes (l new q processed)
@@ -152,22 +159,10 @@
 
 
 ; Добавляет в очередь q необработанные состояния, в которые можно попасть из состояния node
-;(defun get_new_nodes (l q processed node)
-;	(cond
-;		((null l) q)
-;		((equal (caar l) node)
-;			(cond 
-;				((not (or (member (caddar l) processed) (member (caddar l) q))) (get_new_nodes (cdr l) (cons (caddar l) q) processed node))
-;				(T (get_new_nodes (cdr l) q processed node))))
-;		(T (get_new_nodes (cdr l) q processed node))))
-
-
-; Добавляет в очередь q необработанные состояния, в которые можно попасть из состояния node
 (defun get_new_nodes (l q processed node d)
 	(cond
-		((null l) (update-q d q processed))
+		((null l) d)
 		;((c (A B)) (d (A S)))
-		;((null l) d)
 		;((equal (caar l) node)
 		((string-include (string (caar l)) (string node))
 			(get_new_nodes (cdr l) q processed node (insert-append d (string (nth 1 (car l))) (nth 2 (car l)))))
