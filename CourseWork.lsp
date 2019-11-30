@@ -15,7 +15,15 @@
 (defun process (g res)
 	(cond 
 		((null g) res)
-		(T (process (cdr g) (insert-append res (caar g) (concatenate 'string (string-downcase (string (cadar g))) (string (caddar g))))))))
+		(T (process (cdr g) (insert-append res (caar g) (concatenate 'string (string-downcase (string (cadar g))) (string (replace-S (caddar g)))))))))
+
+
+; Функция, которая проверяет, равно ли итоговое состояние S, и заменяет на пустую строку, если равно
+(defun replace-S (str)
+	(print str)
+	(cond 
+		((equal "S" str) "")
+		(T str)))
 
 
 
@@ -55,7 +63,8 @@
 (defun stringify-list (l)
 	(cond 
 		((null l) "")
-		(T (concatenate 'string (replace-all (car l) "S" "") "|" (stringify-list (cdr l))))))
+		(T (concatenate 'string (car l) "|" (stringify-list (cdr l))))))
+		;(T (concatenate 'string (replace-all (car l) "S" "") "|" (stringify-list (cdr l))))))
 		
 
 ; Функция, которая проверяет, содержит ли string2 подстроку string1
