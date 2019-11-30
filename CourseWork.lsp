@@ -3,6 +3,8 @@
 ; (main `((H a B) (H "0" A) (A c H) (A "1" B) (B b B) (B "0" S) (C "3" B) (C a H)))
 ; (determine `((H "1" S) (H "0" B) (H "0" A) (A "1" B) (A "0" A)))
 ; (construct-process `((H "1" S) (H "0" B) (H "0" A) (A "1" B) (A "0" A)) `(H) `(H) ())
+; (determine `((H a A) (H b B) (H c C) (A a A) (A a B) (A c S) (B b H) (B b S) (C c C) (C a A)))
+; (determine `((H a A) (H a B) (H b B) (A a A) (A a S) (B a A) (B a B) (B b S)))
 
 
 (defun main (g)
@@ -25,10 +27,13 @@
         (T (find-l k (cdr l)))))
 
 
-; Вставить в список по ключу k в словаре l значение v
+; Вставить в список по ключу k в словаре l значение v (если оно там ещё не присутствует!; иначе не делает ничего)
 (defun insert-append (l k v)
    (cond ((null l) (list (list k (list v))))
-		 ((equal (caar l) k) (cons (list k (cons v (cadar l))) (cdr l)))
+		 ((equal (caar l) k) 
+		 	(cond
+		 		((member v (cadar l)) l)
+		 		(T (cons (list k (cons v (cadar l))) (cdr l)))))
 		 (T (cons (car l) (insert-append (cdr l) k v)))))
 
 
@@ -100,14 +105,15 @@
 
 ; Строит ДКА
 (defun determine (l)
-	(let* ((nodes (sort (get-determine-nodes l () `(H) `()) #'(lambda (a b) (> (length (string a)) (length (string b)))))))
-		(construct-determine l nodes nodes)))
+	; (let* ((nodes (sort (get-determine-nodes l () `(H) `()) #'(lambda (a b) (> (length (string a)) (length (string b)))))))
+	; 	(construct-determine l nodes nodes)))
+	(construct-process l `(H) `() ()))
 	
-; Возвращает ДКА по НКА и списку новых состояний
-(defun construct-determine (l nodes nodes-const)
-	(cond 
-		((null nodes) nil)
-		(T (append (construct-process l (car nodes) nodes-const) (construct-determine l (cdr nodes) nodes-const)))))
+; ; Возвращает ДКА по НКА и списку новых состояний
+; (defun construct-determine (l nodes nodes-const)
+; 	(cond 
+; 		((null nodes) nil)
+; 		(T (append (construct-process l (car nodes) nodes-const) (construct-determine l (cdr nodes) nodes-const)))))
 		
 
 ; (defun construct-process (l node nodes-const)
@@ -127,11 +133,12 @@
 		((null q) new)
 		(T (let* (
 			(node (get-last q))
-			(d (get_new_nodes l q processed node ())))
-			(construct-process l (update-q d (strike-last q) processed) (cons node processed) (append (get-auto d node) new))
+			(d (get_new_nodes l q (cons node processed) node ())))
+			(construct-process l (update-q d (strike-last q) (cons node processed)) (cons node processed) (append (get-auto d node) new))
 		))))
 
 
+; Строит часть автомата по словарю d из construct-process и имени состояния node
 (defun get-auto (d node)
 	(cond 
 		((null d) NIL)
@@ -183,4 +190,4 @@
 		(T (concatenate 'string (string (car l)) (concate-nodes (cdr l))))))
 
 
-; 758
+; с 11 в 758
